@@ -11,6 +11,7 @@ Standalone MATLAB project for building a compact boxed 2D layout of the Modha & 
 - `sd03.txt`: hierarchy / mapping edge list
 
 Generated outputs are written to `results/` and are ignored by git by default.
+The current shareable example figure exports are tracked in `figures/`.
 
 ## Basic Usage
 
@@ -40,6 +41,12 @@ For an output prefix such as `results/modha_boxed_layout`, the function writes:
 - `results/modha_boxed_layout.svg` when SVG export succeeds
 - `results/modha_boxed_layout_coordinates.csv`
 - `results/modha_boxed_layout_mds_cache.mat`
+
+Tracked example exports in this repository:
+
+- `figures/modha_boxed_layout_refined.png`
+- `figures/modha_boxed_layout_refined.pdf`
+- `figures/modha_boxed_layout_refined.svg`
 
 ## Major Groups
 
