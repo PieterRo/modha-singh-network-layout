@@ -19,6 +19,7 @@ opts = struct();
 opts.layout = 'grid';
 opts.colorByMajorGroup = true;
 opts.useRegionConstraints = true;
+opts.useRefinement = true;
 opts.reuseMDSCache = true;
 opts.saveMDSCache = true;
 
@@ -103,6 +104,64 @@ opts.saveMDSCache = true;
 opts.forceRecomputeMDS = false;
 opts.mdsCacheFile = 'results/modha_boxed_layout_mds_cache.mat';
 ```
+
+## Refinement Stage
+
+The function can optionally refine the cached CoCoMac MDS coordinates before
+the final box assignment. This refinement combines:
+
+- profile preservation from the original CoCoMac MDS
+- attraction between directly connected CoCoMac pairs
+- optional anatomical anchor pulls
+- optional Markov 2014 cortical edge weights when provided
+
+Enable it with:
+
+```matlab
+opts.useRefinement = true;
+opts.refineProfileWeight = 1.0;
+opts.refineProfileK = 12;
+opts.refineEdgeWeight = 0.08;
+opts.refineAnatomyWeight = 0.20;
+```
+
+Useful tuning options:
+
+```matlab
+opts.refineMaxIter = 160;
+opts.refineMinIter = 10;
+opts.refineStepSize = 0.12;
+opts.refineTolerance = 1e-4;
+opts.refineEdgeTargetFraction = 0.60;
+```
+
+The exported coordinate table includes both the raw and refined coordinates:
+
+- `mds_x`, `mds_y`
+- `refined_x`, `refined_y`
+
+## Optional Markov Weights
+
+If you have a cortical edge-weight file derived from Markov et al. 2014, pass
+it in with:
+
+```matlab
+opts.markovWeightsFile = 'markov_edge_weights.csv';
+opts.markovWeightScale = 2.0;
+opts.markovWeightTransform = 'auto';   % 'auto', 'log10', or 'none'
+```
+
+Expected CSV columns:
+
+```text
+source_acronym,target_acronym,weight
+V1,V2,0.032
+V2,V1,0.028
+FEF,46d,0.011
+```
+
+The acronyms in this file should match the Modha labels used by `sd01.txt`.
+The loader symmetrizes directed rows internally for the 2D refinement.
 
 ## Publishing To GitHub
 

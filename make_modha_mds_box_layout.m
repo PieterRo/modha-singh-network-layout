@@ -28,6 +28,19 @@ function OUT = make_modha_mds_box_layout(sd01file, sd02file, varargin)
 %              .regionConstraintsFile (default local region_constraints.csv)
 %              .constraintLambdaAP    (default 0.25)
 %              .constraintLambdaDV    (default 0.20)
+%              .useRefinement         (default false)
+%              .refineProfileWeight   (default 1.0)
+%              .refineProfileK        (default 12)
+%              .refineEdgeWeight      (default 0.08)
+%              .refineEdgeTargetFraction (default 0.60)
+%              .refineAnatomyWeight   (default 0.20)
+%              .refineMaxIter         (default 160)
+%              .refineMinIter         (default 10)
+%              .refineStepSize        (default 0.12)
+%              .refineTolerance       (default 1e-4)
+%              .markovWeightsFile     (default '')
+%              .markovWeightScale     (default 2.0)
+%              .markovWeightTransform (default 'auto')
 %              .drawEdges             (default false)
 %              .maxEdgesToDraw        (default 500)
 %              .mdsCriterion          (default 'stress')
@@ -111,6 +124,7 @@ origIndexPlot = nodeIndex(plotIdx);
 majorGroupPlot = majorGroupAll(plotIdx);
 constraintSpecAll = load_region_constraints(labels, opts);
 constraintSpecPlot = subset_region_constraints(constraintSpecAll, plotIdx);
+markovSpecPlot = load_markov_weights(labelsPlot, opts);
 
 cacheFile = resolve_mds_cache_file(outPrefix, opts);
 cacheSignature = build_mds_cache_signature(sd01file, sd02file, sd03file, plotIdx, opts);
@@ -127,12 +141,15 @@ else
     [Yplot, stress, mdsInfo] = compute_mds_layout(D, Dsquare, opts);
     cacheInfo = save_mds_cache(cacheFile, cacheSignature, Yplot, stress, distInfo, mdsInfo, opts, cacheInfo);
 end
-[centerXY, gridRC, layoutInfo] = assign_box_layout(Yplot, opts, constraintSpecPlot);
+[Ylayout, refineInfo] = refine_layout_coordinates(Yplot, Aplot, labelsPlot, ...
+    constraintSpecPlot, markovSpecPlot, opts);
+[centerXY, gridRC, layoutInfo] = assign_box_layout(Ylayout, opts, constraintSpecPlot);
+layoutInfo.refinement = refineInfo;
 
 boxX = centerXY(:,1) - opts.boxWidth / 2;
 boxY = centerXY(:,2) - opts.boxHeight / 2;
 
-tbl = build_output_table(nodeIndex, labels, keepMask, Yplot, gridRC, centerXY, ...
+tbl = build_output_table(nodeIndex, labels, keepMask, Yplot, Ylayout, gridRC, centerXY, ...
     boxX, boxY, inDegree, outDegree, rootIndexAll, rootLabelAll, depthAll, ...
     majorGroupAll, constraintSpecAll);
 
@@ -163,16 +180,19 @@ OUT.keepMask = keepMask;
 OUT.plotIndex = plotIdx;
 OUT.plotNodeIndex = origIndexPlot;
 OUT.mdsXY = Yplot;
+OUT.refinedXY = Ylayout;
 OUT.boxCenterXY = centerXY;
 OUT.gridRC = gridRC;
 OUT.parentOf = parentOfAll;
 OUT.majorGroup = majorGroupAll;
 OUT.regionConstraints = constraintSpecAll;
+OUT.markovWeights = markovSpecPlot;
 OUT.inDegree = inDegree;
 OUT.outDegree = outDegree;
 OUT.stress = stress;
 OUT.distanceInfo = distInfo;
 OUT.mdsInfo = mdsInfo;
+OUT.refinementInfo = refineInfo;
 OUT.layoutInfo = layoutInfo;
 OUT.cacheInfo = cacheInfo;
 OUT.table = tbl;
@@ -227,6 +247,19 @@ defaults.useRegionConstraints = false;
 defaults.regionConstraintsFile = '';
 defaults.constraintLambdaAP = 0.25;
 defaults.constraintLambdaDV = 0.20;
+defaults.useRefinement = false;
+defaults.refineProfileWeight = 1.0;
+defaults.refineProfileK = 12;
+defaults.refineEdgeWeight = 0.08;
+defaults.refineEdgeTargetFraction = 0.60;
+defaults.refineAnatomyWeight = 0.20;
+defaults.refineMaxIter = 160;
+defaults.refineMinIter = 10;
+defaults.refineStepSize = 0.12;
+defaults.refineTolerance = 1e-4;
+defaults.markovWeightsFile = '';
+defaults.markovWeightScale = 2.0;
+defaults.markovWeightTransform = 'auto';
 defaults.drawEdges = false;
 defaults.maxEdgesToDraw = 500;
 defaults.mdsCriterion = 'stress';
@@ -267,6 +300,7 @@ opts.layout = lower(to_char(opts.layout));
 opts.connectedMode = lower(to_char(opts.connectedMode));
 opts.figureVisible = lower(to_char(opts.figureVisible));
 opts.mdsDisplay = lower(to_char(opts.mdsDisplay));
+opts.markovWeightTransform = lower(to_char(opts.markovWeightTransform));
 
 if ~strcmp(opts.layout, 'grid') && ~strcmp(opts.layout, 'circle')
     error('make_modha_mds_box_layout:BadLayout', ...
@@ -276,6 +310,12 @@ end
 if ~strcmp(opts.mdsDisplay, 'off') && ~strcmp(opts.mdsDisplay, 'final') && ~strcmp(opts.mdsDisplay, 'iter')
     error('make_modha_mds_box_layout:BadMDSDisplay', ...
         'opts.mdsDisplay must be ''off'', ''final'', or ''iter''.');
+end
+
+if ~strcmp(opts.markovWeightTransform, 'auto') && ~strcmp(opts.markovWeightTransform, 'none') ...
+        && ~strcmp(opts.markovWeightTransform, 'log10')
+    error('make_modha_mds_box_layout:BadMarkovTransform', ...
+        'opts.markovWeightTransform must be ''auto'', ''none'', or ''log10''.');
 end
 end
 
@@ -455,6 +495,145 @@ for i = 1:numel(fieldsToSubset)
 end
 subset.active = any(subset.isAnchored);
 subset.info.nAnchoredNodes = nnz(subset.isAnchored);
+end
+
+function markovSpec = load_markov_weights(labelsPlot, opts)
+nNodes = numel(labelsPlot);
+markovSpec = empty_markov_weights(nNodes);
+markovSpec.file = to_char(opts.markovWeightsFile);
+
+if isempty(markovSpec.file)
+    markovSpec.info.reason = 'not_provided';
+    return;
+end
+
+if exist(markovSpec.file, 'file') ~= 2
+    warning('make_modha_mds_box_layout:MarkovWeightsMissing', ...
+        'opts.markovWeightsFile does not exist: %s. Continuing without Markov weights.', ...
+        markovSpec.file);
+    markovSpec.info.reason = 'file_missing';
+    return;
+end
+
+T = readtable(markovSpec.file, 'Delimiter', ',');
+requiredVars = {'source_acronym', 'target_acronym', 'weight'};
+for i = 1:numel(requiredVars)
+    if ~any(strcmpi(T.Properties.VariableNames, requiredVars{i}))
+        error('make_modha_mds_box_layout:BadMarkovWeightsFile', ...
+            'Markov weights file is missing required column "%s": %s', ...
+            requiredVars{i}, markovSpec.file);
+    end
+end
+
+srcLabel = table_text_column_to_cellstr(get_table_var(T, 'source_acronym'));
+dstLabel = table_text_column_to_cellstr(get_table_var(T, 'target_acronym'));
+rawWeight = double(get_table_var(T, 'weight'));
+valid = isfinite(rawWeight) & (rawWeight > 0);
+srcLabel = srcLabel(valid);
+dstLabel = dstLabel(valid);
+rawWeight = rawWeight(valid);
+
+[srcFound, srcIdx] = ismember(srcLabel, labelsPlot);
+[dstFound, dstIdx] = ismember(dstLabel, labelsPlot);
+matched = srcFound & dstFound;
+
+if ~any(matched)
+    markovSpec.info.reason = 'no_matching_rows';
+    warning('make_modha_mds_box_layout:MarkovWeightsNoMatches', ...
+        'No rows in %s matched the plotted labels. Continuing without Markov weights.', ...
+        markovSpec.file);
+    return;
+end
+
+srcIdx = srcIdx(matched);
+dstIdx = dstIdx(matched);
+rawWeight = rawWeight(matched);
+srcLabel = srcLabel(matched);
+dstLabel = dstLabel(matched);
+
+Wdir = nan(nNodes, nNodes);
+for i = 1:numel(rawWeight)
+    Wdir(srcIdx(i), dstIdx(i)) = rawWeight(i);
+end
+
+Wsym = nan(nNodes, nNodes);
+for i = 1:nNodes
+    for j = (i + 1):nNodes
+        wij = Wdir(i, j);
+        wji = Wdir(j, i);
+        if isfinite(wij) && isfinite(wji)
+            w = sqrt(wij * wji);
+        elseif isfinite(wij)
+            w = wij;
+        elseif isfinite(wji)
+            w = wji;
+        else
+            continue;
+        end
+        Wsym(i, j) = w;
+        Wsym(j, i) = w;
+    end
+end
+
+Wnorm = normalize_markov_weight_matrix(Wsym, opts.markovWeightTransform);
+markovSpec.rawSymWeight = Wsym;
+markovSpec.normSymWeight = Wnorm;
+markovSpec.active = any(isfinite(Wnorm(:)) & (Wnorm(:) > 0));
+markovSpec.info.reason = 'loaded';
+markovSpec.info.nMatchedRows = numel(rawWeight);
+markovSpec.info.nSymmetricPairs = nnz(triu(isfinite(Wnorm) & (Wnorm > 0), 1));
+markovSpec.info.labelsMatched = unique([srcLabel; dstLabel]);
+
+if opts.verbose
+    fprintf(['Loaded Markov weights from %s ' ...
+        '(%d matched directed rows, %d cortical pairs).\n'], ...
+        markovSpec.file, markovSpec.info.nMatchedRows, markovSpec.info.nSymmetricPairs);
+end
+end
+
+function markovSpec = empty_markov_weights(nNodes)
+markovSpec = struct();
+markovSpec.file = '';
+markovSpec.active = false;
+markovSpec.rawSymWeight = nan(nNodes, nNodes);
+markovSpec.normSymWeight = nan(nNodes, nNodes);
+markovSpec.info = struct('reason', '', 'nMatchedRows', 0, ...
+    'nSymmetricPairs', 0, 'labelsMatched', {{}});
+end
+
+function Wnorm = normalize_markov_weight_matrix(Wsym, transformMode)
+Wnorm = nan(size(Wsym));
+positive = isfinite(Wsym) & (Wsym > 0);
+if ~any(positive(:))
+    return;
+end
+
+raw = Wsym(positive);
+switch transformMode
+    case 'none'
+        values = raw;
+    case 'log10'
+        values = log10(raw);
+    otherwise
+        if max(raw) <= 1 && min(raw) < 1e-2
+            values = log10(raw);
+        else
+            values = raw;
+        end
+end
+
+vMin = min(values);
+vMax = max(values);
+if ~isfinite(vMin) || ~isfinite(vMax)
+    return;
+end
+if abs(vMax - vMin) < eps
+    valuesNorm = ones(size(values));
+else
+    valuesNorm = (values - vMin) ./ (vMax - vMin);
+end
+
+Wnorm(positive) = valuesNorm;
 end
 
 function sig = build_mds_cache_signature(sd01file, sd02file, sd03file, plotIdx, opts)
@@ -922,6 +1101,315 @@ if size(Y, 2) < 2
 end
 end
 
+function [Yrefined, info] = refine_layout_coordinates(Y0, Aplot, labelsPlot, ...
+    constraintSpec, markovSpec, opts)
+Yrefined = Y0;
+info = struct();
+info.enabled = opts.useRefinement;
+info.reason = '';
+info.iterations = 0;
+info.profilePairs = 0;
+info.edgePairs = 0;
+info.markovPairs = 0;
+info.anatomyAnchors = 0;
+info.profileLoss = 0;
+info.edgeLoss = 0;
+info.anatomyLoss = 0;
+info.totalLoss = 0;
+info.delta = 0;
+
+if ~opts.useRefinement
+    info.reason = 'disabled';
+    return;
+end
+
+if size(Y0, 1) < 2
+    info.reason = 'too_few_nodes';
+    return;
+end
+
+profileSpec = build_profile_refinement_spec(Y0, opts);
+edgeSpec = build_edge_refinement_spec(Aplot, markovSpec, Y0, opts);
+anatomySpec = build_anatomy_refinement_spec(constraintSpec, Y0);
+
+info.profilePairs = numel(profileSpec.i);
+info.edgePairs = numel(edgeSpec.i);
+info.markovPairs = edgeSpec.nMarkovPairs;
+info.anatomyAnchors = nnz(anatomySpec.isActive);
+
+if info.profilePairs == 0 && info.edgePairs == 0 && info.anatomyAnchors == 0
+    info.reason = 'no_active_terms';
+    return;
+end
+
+Y = center_and_match_reference_scale(Y0, Y0);
+lastLoss = inf;
+
+for iter = 1:opts.refineMaxIter
+    [forceProfile, lossProfile] = compute_profile_force(Y, profileSpec, opts.refineProfileWeight);
+    [forceEdge, lossEdge] = compute_edge_force(Y, edgeSpec, opts.refineEdgeWeight);
+    [forceAnatomy, lossAnatomy] = compute_anatomy_force(Y, anatomySpec, opts.refineAnatomyWeight);
+
+    totalForce = forceProfile + forceEdge + forceAnatomy;
+    Ynext = Y + opts.refineStepSize * totalForce;
+    Ynext = center_and_match_reference_scale(Ynext, Y0);
+
+    delta = sqrt(mean(sum((Ynext - Y).^2, 2)));
+    totalLoss = lossProfile + lossEdge + lossAnatomy;
+
+    Y = Ynext;
+    info.iterations = iter;
+    info.profileLoss = lossProfile;
+    info.edgeLoss = lossEdge;
+    info.anatomyLoss = lossAnatomy;
+    info.totalLoss = totalLoss;
+    info.delta = delta;
+
+    if opts.verbose && (iter == 1 || mod(iter, 25) == 0 || delta < opts.refineTolerance)
+        fprintf(['Refinement iter %d: total=%.5f | profile=%.5f | edge=%.5f | ' ...
+            'anat=%.5f | delta=%.6f\n'], ...
+            iter, totalLoss, lossProfile, lossEdge, lossAnatomy, delta);
+    end
+
+    if iter >= opts.refineMinIter && delta < opts.refineTolerance
+        info.reason = 'converged';
+        break;
+    end
+    if iter >= opts.refineMinIter && abs(lastLoss - totalLoss) < opts.refineTolerance * max(1, lastLoss)
+        info.reason = 'loss_plateau';
+        break;
+    end
+    lastLoss = totalLoss;
+end
+
+if isempty(info.reason)
+    if info.iterations >= opts.refineMaxIter
+        info.reason = 'max_iter';
+    else
+        info.reason = 'completed';
+    end
+end
+
+Yrefined = Y;
+info.labels = labelsPlot;
+end
+
+function spec = build_profile_refinement_spec(Y0, opts)
+nNodes = size(Y0, 1);
+K = min(max(1, round(opts.refineProfileK)), max(1, nNodes - 1));
+spec = struct('i', zeros(0,1), 'j', zeros(0,1), 'targetDist', zeros(0,1));
+
+if nNodes < 2 || K < 1 || opts.refineProfileWeight <= 0
+    return;
+end
+
+D2 = pdist2(Y0, Y0, 'squaredeuclidean');
+D2(1:nNodes+1:end) = inf;
+pairList = zeros(nNodes * K, 2);
+nPairs = 0;
+
+for i = 1:nNodes
+    [~, order] = sort(D2(i, :), 'ascend');
+    nnIdx = order(1:K);
+    pairs = sort([repmat(i, K, 1), nnIdx(:)], 2);
+    pairList(nPairs + (1:K), :) = pairs;
+    nPairs = nPairs + K;
+end
+
+pairList = unique(pairList(1:nPairs, :), 'rows');
+keep = pairList(:,1) ~= pairList(:,2);
+pairList = pairList(keep, :);
+
+spec.i = pairList(:,1);
+spec.j = pairList(:,2);
+spec.targetDist = sqrt(sum((Y0(spec.i,:) - Y0(spec.j,:)).^2, 2));
+end
+
+function spec = build_edge_refinement_spec(Aplot, markovSpec, Y0, opts)
+nNodes = size(Aplot, 1);
+spec = struct('i', zeros(0,1), 'j', zeros(0,1), 'springWeight', zeros(0,1), ...
+    'targetDist', zeros(0,1), 'nMarkovPairs', 0);
+
+if nNodes < 2 || opts.refineEdgeWeight <= 0
+    return;
+end
+
+adjUndir = Aplot | Aplot';
+markovPairMask = false(nNodes, nNodes);
+markovNorm = nan(nNodes, nNodes);
+if markovSpec.active
+    markovNorm = markovSpec.normSymWeight;
+    markovPairMask = isfinite(markovNorm) & (markovNorm > 0);
+end
+
+pairMask = triu(adjUndir | markovPairMask, 1);
+[ii, jj] = find(pairMask);
+if isempty(ii)
+    return;
+end
+
+springWeight = double(adjUndir(sub2ind([nNodes, nNodes], ii, jj)));
+hasMarkov = markovPairMask(sub2ind([nNodes, nNodes], ii, jj));
+springWeight(hasMarkov) = springWeight(hasMarkov) + ...
+    opts.markovWeightScale * markovNorm(sub2ind([nNodes, nNodes], ii(hasMarkov), jj(hasMarkov)));
+
+positiveWeight = springWeight > 0;
+ii = ii(positiveWeight);
+jj = jj(positiveWeight);
+springWeight = springWeight(positiveWeight);
+if isempty(ii)
+    return;
+end
+
+spec.i = ii;
+spec.j = jj;
+spec.springWeight = springWeight;
+profileSpec = build_profile_refinement_spec(Y0, opts);
+if isempty(profileSpec.targetDist)
+    targetScale = median(pdist(Y0));
+else
+    targetScale = median(profileSpec.targetDist);
+end
+if ~isfinite(targetScale) || targetScale <= 0
+    targetScale = 1;
+end
+spec.targetDist = opts.refineEdgeTargetFraction * targetScale * ones(size(ii));
+spec.nMarkovPairs = nnz(hasMarkov(positiveWeight));
+end
+
+function spec = build_anatomy_refinement_spec(constraintSpec, Y0)
+nNodes = size(Y0, 1);
+spec = struct();
+spec.isActive = false(nNodes, 1);
+spec.targetXY = zeros(nNodes, 2);
+spec.weightXY = zeros(nNodes, 2);
+
+if ~constraintSpec.active
+    return;
+end
+
+Ycentered = Y0 - mean(Y0, 1);
+scaleX = max(abs(Ycentered(:,1)));
+scaleY = max(abs(Ycentered(:,2)));
+if ~isfinite(scaleX) || scaleX <= 0
+    scaleX = 1;
+end
+if ~isfinite(scaleY) || scaleY <= 0
+    scaleY = 1;
+end
+
+hasAP = isfinite(constraintSpec.apPref) & (constraintSpec.apWeight > 0);
+hasDV = isfinite(constraintSpec.dvPref) & (constraintSpec.dvWeight > 0);
+spec.isActive = hasAP | hasDV;
+spec.targetXY(hasAP, 1) = constraintSpec.apPref(hasAP) * scaleX;
+spec.targetXY(hasDV, 2) = constraintSpec.dvPref(hasDV) * scaleY;
+spec.weightXY(:,1) = constraintSpec.apWeight;
+spec.weightXY(:,2) = constraintSpec.dvWeight;
+end
+
+function [force, loss] = compute_profile_force(Y, spec, weightScale)
+force = zeros(size(Y));
+loss = 0;
+pairCount = zeros(size(Y,1), 1);
+
+if isempty(spec.i) || weightScale <= 0
+    return;
+end
+
+nPairs = numel(spec.i);
+for p = 1:nPairs
+    i = spec.i(p);
+    j = spec.j(p);
+    delta = Y(j,:) - Y(i,:);
+    dist = hypot(delta(1), delta(2));
+    if dist < eps
+        dist = eps;
+    end
+    err = dist - spec.targetDist(p);
+    unitVec = delta / dist;
+    pull = weightScale * err * unitVec;
+    force(i,:) = force(i,:) + pull;
+    force(j,:) = force(j,:) - pull;
+    pairCount(i) = pairCount(i) + 1;
+    pairCount(j) = pairCount(j) + 1;
+    loss = loss + weightScale * (err ^ 2) / nPairs;
+end
+
+nonzero = pairCount > 0;
+force(nonzero,:) = force(nonzero,:) ./ pairCount(nonzero);
+end
+
+function [force, loss] = compute_edge_force(Y, spec, weightScale)
+force = zeros(size(Y));
+loss = 0;
+pairCount = zeros(size(Y,1), 1);
+
+if isempty(spec.i) || weightScale <= 0
+    return;
+end
+
+nPairs = numel(spec.i);
+for p = 1:nPairs
+    i = spec.i(p);
+    j = spec.j(p);
+    delta = Y(j,:) - Y(i,:);
+    dist = hypot(delta(1), delta(2));
+    if dist < eps
+        dist = eps;
+    end
+    err = dist - spec.targetDist(p);
+    unitVec = delta / dist;
+    localWeight = weightScale * spec.springWeight(p);
+    pull = localWeight * err * unitVec;
+    force(i,:) = force(i,:) + pull;
+    force(j,:) = force(j,:) - pull;
+    pairCount(i) = pairCount(i) + 1;
+    pairCount(j) = pairCount(j) + 1;
+    loss = loss + localWeight * (err ^ 2) / nPairs;
+end
+
+nonzero = pairCount > 0;
+force(nonzero,:) = force(nonzero,:) ./ pairCount(nonzero);
+end
+
+function [force, loss] = compute_anatomy_force(Y, spec, weightScale)
+force = zeros(size(Y));
+loss = 0;
+
+if ~any(spec.isActive) || weightScale <= 0
+    return;
+end
+
+idx = find(spec.isActive);
+nActive = numel(idx);
+for k = 1:nActive
+    i = idx(k);
+    dx = spec.targetXY(i,1) - Y(i,1);
+    dy = spec.targetXY(i,2) - Y(i,2);
+    wx = weightScale * spec.weightXY(i,1);
+    wy = weightScale * spec.weightXY(i,2);
+    force(i,1) = force(i,1) + wx * dx;
+    force(i,2) = force(i,2) + wy * dy;
+    loss = loss + (wx * dx ^ 2 + wy * dy ^ 2) / nActive;
+end
+end
+
+function Ynorm = center_and_match_reference_scale(Y, Yref)
+Ynorm = Y - mean(Y, 1);
+refCentered = Yref - mean(Yref, 1);
+refRms = sqrt(mean(sum(refCentered .^ 2, 2)));
+curRms = sqrt(mean(sum(Ynorm .^ 2, 2)));
+
+if ~isfinite(refRms) || refRms <= 0
+    refRms = 1;
+end
+if ~isfinite(curRms) || curRms <= 0
+    curRms = 1;
+end
+
+Ynorm = Ynorm * (refRms / curRms);
+end
+
 function [centerXY, gridRC, layoutInfo] = assign_box_layout(Y, opts, constraintSpec)
 nNodes = size(Y, 1);
 cellW = opts.boxWidth + opts.boxGapX;
@@ -1242,13 +1730,15 @@ end
 totalCost = sum(costMatrix(sub2ind(size(costMatrix), (1:nNodes)', assignIdx)));
 end
 
-function tbl = build_output_table(nodeIndex, labels, keepMask, Yplot, gridRC, centerXY, ...
+function tbl = build_output_table(nodeIndex, labels, keepMask, Yplot, Yrefined, gridRC, centerXY, ...
     boxX, boxY, inDegree, outDegree, rootIndexAll, rootLabelAll, depthAll, ...
     majorGroupAll, constraintSpecAll)
 nNodes = numel(nodeIndex);
 
 mdsX = nan(nNodes, 1);
 mdsY = nan(nNodes, 1);
+refinedX = nan(nNodes, 1);
+refinedY = nan(nNodes, 1);
 gridRow = nan(nNodes, 1);
 gridCol = nan(nNodes, 1);
 boxCenterX = nan(nNodes, 1);
@@ -1266,6 +1756,8 @@ anchorNotes = constraintSpecAll.notes(:);
 plotIdx = find(keepMask);
 mdsX(plotIdx) = Yplot(:,1);
 mdsY(plotIdx) = Yplot(:,2);
+refinedX(plotIdx) = Yrefined(:,1);
+refinedY(plotIdx) = Yrefined(:,2);
 gridRow(plotIdx) = gridRC(:,1);
 gridCol(plotIdx) = gridRC(:,2);
 boxCenterX(plotIdx) = centerXY(:,1);
@@ -1279,6 +1771,8 @@ tbl = table( ...
     keepMask(:), ...
     mdsX(:), ...
     mdsY(:), ...
+    refinedX(:), ...
+    refinedY(:), ...
     gridRow(:), ...
     gridCol(:), ...
     boxCenterX(:), ...
@@ -1299,7 +1793,8 @@ tbl = table( ...
     anchorNotes(:), ...
     depthAll(:), ...
     'VariableNames', { ...
-    'index', 'acronym', 'is_plotted', 'mds_x', 'mds_y', 'grid_row', 'grid_col', ...
+    'index', 'acronym', 'is_plotted', 'mds_x', 'mds_y', 'refined_x', 'refined_y', ...
+    'grid_row', 'grid_col', ...
     'box_center_x', 'box_center_y', 'box_x', 'box_y', ...
     'in_degree', 'out_degree', 'root_index', 'root_acronym', 'major_group', ...
     'is_anatomically_anchored', 'anchor_ap_pref', 'anchor_dv_pref', ...
