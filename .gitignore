@@ -1,0 +1,10 @@
+# Generated outputs
+results/
+
+# MATLAB cache / workspace
+*.asv
+*.m~
+*.mat
+
+# OS/editor noise
+.DS_Store
