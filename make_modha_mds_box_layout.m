@@ -1877,15 +1877,15 @@ end
 
 switch majorGroup
     case 'cortical'
-        faceColor = [0.90 0.94 1.00];
+        faceColor = [0.78 0.86 0.96];
     case 'thalamic'
-        faceColor = [1.00 0.92 0.80];
+        faceColor = [0.98 0.84 0.62];
     case 'basal_ganglia'
-        faceColor = [0.88 0.96 0.86];
+        faceColor = [0.76 0.88 0.76];
     case 'diencephalon'
-        faceColor = [0.98 0.89 0.94];
+        faceColor = [0.93 0.78 0.84];
     case 'lower'
-        faceColor = [0.92 0.92 0.92];
+        faceColor = [0.86 0.86 0.86];
     otherwise
         faceColor = [1.00 1.00 1.00];
 end
