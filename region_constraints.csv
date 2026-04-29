@@ -1,0 +1,211 @@
+acronym,ap_pref,dv_pref,ap_weight,dv_weight,source,notes
+Hyp,0.16,-0.86,0.70,0.90,SaleemLogothetis_approx,hypothalamus ventral anterior
+Tha,0.00,0.00,0.25,0.25,SaleemLogothetis_approx,thalamus root weak
+MG,-0.44,-0.06,0.65,0.35,SaleemLogothetis_approx,geniculate posterior thalamus
+LGN,-0.44,-0.06,0.65,0.35,SaleemLogothetis_approx,geniculate posterior thalamus
+Pul#1,-0.28,0.12,0.60,0.40,SaleemLogothetis_approx,pulvinar posterior thalamus
+MD,0.16,0.18,0.65,0.45,SaleemLogothetis_approx,mediodorsal thalamus anterior
+VPM,0.04,0.14,0.50,0.35,SaleemLogothetis_approx,relay thalamus
+VPL,0.04,0.14,0.50,0.35,SaleemLogothetis_approx,relay thalamus
+VL,0.04,0.14,0.50,0.35,SaleemLogothetis_approx,relay thalamus
+VA,0.04,0.14,0.50,0.35,SaleemLogothetis_approx,relay thalamus
+Pfc,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+PFCorb,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+14,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+14O,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+14r,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+OFap,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+OFO,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+ProM#2,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+Gu,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+13,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+13L,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+13M,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+13a,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+10,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+10m,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+10v,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+10d,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+10o,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+12,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+12o,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+12m,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+47/12,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+12r,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+12l,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+11,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+11l,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+11m,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral
+9,0.64,0.62,0.90,0.75,SaleemLogothetis_approx,dorsolateral prefrontal
+46,0.64,0.62,0.90,0.75,SaleemLogothetis_approx,dorsolateral prefrontal
+46v,0.64,0.62,0.90,0.75,SaleemLogothetis_approx,dorsolateral prefrontal
+46d,0.64,0.62,0.90,0.75,SaleemLogothetis_approx,dorsolateral prefrontal
+46f,0.64,0.62,0.90,0.75,SaleemLogothetis_approx,dorsolateral prefrontal
+46vr,0.64,0.62,0.90,0.75,SaleemLogothetis_approx,dorsolateral prefrontal
+46dr,0.64,0.62,0.90,0.75,SaleemLogothetis_approx,dorsolateral prefrontal
+9/46,0.64,0.62,0.90,0.75,SaleemLogothetis_approx,dorsolateral prefrontal
+9/46v,0.64,0.62,0.90,0.75,SaleemLogothetis_approx,dorsolateral prefrontal
+9/46d,0.64,0.62,0.90,0.75,SaleemLogothetis_approx,dorsolateral prefrontal
+8,0.56,0.76,0.85,0.85,SaleemLogothetis_approx,frontal eye and dorsal premotor
+FEF,0.56,0.76,0.85,0.85,SaleemLogothetis_approx,frontal eye and dorsal premotor
+45,0.56,0.42,0.80,0.60,SaleemLogothetis_approx,inferior frontal ventrolateral
+45A,0.56,0.42,0.80,0.60,SaleemLogothetis_approx,inferior frontal ventrolateral
+45B,0.56,0.42,0.80,0.60,SaleemLogothetis_approx,inferior frontal ventrolateral
+8A,0.56,0.76,0.85,0.85,SaleemLogothetis_approx,frontal eye and dorsal premotor
+8Ad,0.56,0.76,0.85,0.85,SaleemLogothetis_approx,frontal eye and dorsal premotor
+8Ac,0.56,0.76,0.85,0.85,SaleemLogothetis_approx,frontal eye and dorsal premotor
+8B,0.56,0.76,0.85,0.85,SaleemLogothetis_approx,frontal eye and dorsal premotor
+6#1,0.30,0.70,0.80,0.80,SaleemLogothetis_approx,premotor medial dorsal
+6V,0.30,0.70,0.80,0.80,SaleemLogothetis_approx,premotor medial dorsal
+F5,0.30,0.70,0.80,0.80,SaleemLogothetis_approx,premotor medial dorsal
+PrCO,0.30,0.70,0.80,0.80,SaleemLogothetis_approx,premotor medial dorsal
+4c,0.18,0.66,0.75,0.75,SaleemLogothetis_approx,primary motor dorsal
+F4,0.30,0.70,0.80,0.80,SaleemLogothetis_approx,premotor medial dorsal
+44,0.56,0.42,0.80,0.60,SaleemLogothetis_approx,inferior frontal ventrolateral
+6D,0.30,0.70,0.80,0.80,SaleemLogothetis_approx,premotor medial dorsal
+F7,0.30,0.70,0.80,0.80,SaleemLogothetis_approx,premotor medial dorsal
+F2,0.30,0.70,0.80,0.80,SaleemLogothetis_approx,premotor medial dorsal
+6M,0.30,0.70,0.80,0.80,SaleemLogothetis_approx,premotor medial dorsal
+F3,0.30,0.70,0.80,0.80,SaleemLogothetis_approx,premotor medial dorsal
+SMAr,0.30,0.70,0.80,0.80,SaleemLogothetis_approx,premotor medial dorsal
+SMAc,0.30,0.70,0.80,0.80,SaleemLogothetis_approx,premotor medial dorsal
+M2-HL,0.30,0.70,0.80,0.80,SaleemLogothetis_approx,premotor medial dorsal
+M2-FL,0.30,0.70,0.80,0.80,SaleemLogothetis_approx,premotor medial dorsal
+F6,0.30,0.70,0.80,0.80,SaleemLogothetis_approx,premotor medial dorsal
+M1,0.18,0.66,0.75,0.75,SaleemLogothetis_approx,primary motor dorsal
+M1-FL,0.18,0.66,0.75,0.75,SaleemLogothetis_approx,primary motor dorsal
+4b,0.18,0.66,0.75,0.75,SaleemLogothetis_approx,primary motor dorsal
+4a,0.18,0.66,0.75,0.75,SaleemLogothetis_approx,primary motor dorsal
+M1-HL,0.18,0.66,0.75,0.75,SaleemLogothetis_approx,primary motor dorsal
+7#1,-0.22,0.56,0.75,0.70,SaleemLogothetis_approx,inferior parietal
+PFop,-0.22,0.56,0.75,0.70,SaleemLogothetis_approx,inferior parietal
+PP,-0.22,0.56,0.75,0.70,SaleemLogothetis_approx,inferior parietal
+PGop,-0.22,0.56,0.75,0.70,SaleemLogothetis_approx,inferior parietal
+IPL,-0.22,0.56,0.75,0.70,SaleemLogothetis_approx,inferior parietal
+7a,-0.22,0.56,0.75,0.70,SaleemLogothetis_approx,inferior parietal
+PG#1,-0.22,0.56,0.75,0.70,SaleemLogothetis_approx,inferior parietal
+Opt,-0.22,0.56,0.75,0.70,SaleemLogothetis_approx,inferior parietal
+7b,-0.22,0.56,0.75,0.70,SaleemLogothetis_approx,inferior parietal
+PFG#1,-0.22,0.56,0.75,0.70,SaleemLogothetis_approx,inferior parietal
+PF#1,-0.22,0.56,0.75,0.70,SaleemLogothetis_approx,inferior parietal
+PCip,-0.26,0.72,0.85,0.85,SaleemLogothetis_approx,posterior parietal dorsal
+LIP,-0.26,0.72,0.85,0.85,SaleemLogothetis_approx,posterior parietal dorsal
+LIPe,-0.26,0.72,0.85,0.85,SaleemLogothetis_approx,posterior parietal dorsal
+LIPi,-0.26,0.72,0.85,0.85,SaleemLogothetis_approx,posterior parietal dorsal
+VIP,-0.26,0.72,0.85,0.85,SaleemLogothetis_approx,posterior parietal dorsal
+PIP#1,-0.26,0.72,0.85,0.85,SaleemLogothetis_approx,posterior parietal dorsal
+AIP,-0.26,0.72,0.85,0.85,SaleemLogothetis_approx,posterior parietal dorsal
+MIP,-0.26,0.72,0.85,0.85,SaleemLogothetis_approx,posterior parietal dorsal
+PCd#2,-0.26,0.72,0.85,0.85,SaleemLogothetis_approx,posterior parietal dorsal
+SPL,-0.30,0.82,0.80,0.85,SaleemLogothetis_approx,superior parietal dorsal
+PEm,-0.30,0.82,0.80,0.85,SaleemLogothetis_approx,superior parietal dorsal
+PEc#1,-0.30,0.82,0.80,0.85,SaleemLogothetis_approx,superior parietal dorsal
+PCm,-0.30,0.82,0.80,0.85,SaleemLogothetis_approx,superior parietal dorsal
+PGm,-0.30,0.82,0.80,0.85,SaleemLogothetis_approx,superior parietal dorsal
+31,0.08,0.48,0.55,0.55,SaleemLogothetis_approx,medial parietal
+PECg,-0.30,0.82,0.80,0.85,SaleemLogothetis_approx,superior parietal dorsal
+TSA,0.14,0.06,0.65,0.45,SaleemLogothetis_approx,temporo parieto occipital junction
+Insula,0.08,-0.08,0.55,0.45,SaleemLogothetis_approx,insula central
+Ig#1,0.08,-0.08,0.55,0.45,SaleemLogothetis_approx,insula central
+Ri#1,0.08,-0.08,0.55,0.45,SaleemLogothetis_approx,insula central
+TF,0.26,-0.36,0.70,0.65,SaleemLogothetis_approx,parahippocampal temporal
+TFM,0.26,-0.36,0.70,0.65,SaleemLogothetis_approx,parahippocampal temporal
+TFL,0.26,-0.36,0.70,0.65,SaleemLogothetis_approx,parahippocampal temporal
+Per#1,0.28,-0.56,0.75,0.80,SaleemLogothetis_approx,parahippocampal perirhinal ventral
+35,0.28,-0.56,0.75,0.80,SaleemLogothetis_approx,parahippocampal perirhinal ventral
+36,0.28,-0.56,0.75,0.80,SaleemLogothetis_approx,parahippocampal perirhinal ventral
+36c,0.28,-0.56,0.75,0.80,SaleemLogothetis_approx,parahippocampal perirhinal ventral
+36r,0.28,-0.56,0.75,0.80,SaleemLogothetis_approx,parahippocampal perirhinal ventral
+TG,0.60,-0.16,0.75,0.55,SaleemLogothetis_approx,temporal pole anterior
+TPPro,0.60,-0.16,0.75,0.55,SaleemLogothetis_approx,temporal pole anterior
+TPag,0.60,-0.16,0.75,0.55,SaleemLogothetis_approx,temporal pole anterior
+TPg,0.60,-0.16,0.75,0.55,SaleemLogothetis_approx,temporal pole anterior
+TPproD,0.60,-0.16,0.75,0.55,SaleemLogothetis_approx,temporal pole anterior
+TPdgv,0.60,-0.16,0.75,0.55,SaleemLogothetis_approx,temporal pole anterior
+TPdgd,0.60,-0.16,0.75,0.55,SaleemLogothetis_approx,temporal pole anterior
+36p,0.28,-0.56,0.75,0.80,SaleemLogothetis_approx,parahippocampal perirhinal ventral
+PHC,0.28,-0.56,0.75,0.80,SaleemLogothetis_approx,parahippocampal perirhinal ventral
+ENT,0.28,-0.56,0.75,0.80,SaleemLogothetis_approx,parahippocampal perirhinal ventral
+EL,0.10,-0.72,0.65,0.85,SaleemLogothetis_approx,entorhinal hippocampal ventral
+ELr,0.10,-0.72,0.65,0.85,SaleemLogothetis_approx,entorhinal hippocampal ventral
+ELc,0.10,-0.72,0.65,0.85,SaleemLogothetis_approx,entorhinal hippocampal ventral
+EI,0.10,-0.72,0.65,0.85,SaleemLogothetis_approx,entorhinal hippocampal ventral
+ER#1,0.10,-0.72,0.65,0.85,SaleemLogothetis_approx,entorhinal hippocampal ventral
+28m,0.10,-0.72,0.65,0.85,SaleemLogothetis_approx,entorhinal hippocampal ventral
+EO,0.10,-0.72,0.65,0.85,SaleemLogothetis_approx,entorhinal hippocampal ventral
+ECL,0.10,-0.72,0.65,0.85,SaleemLogothetis_approx,entorhinal hippocampal ventral
+EC#2,0.10,-0.72,0.65,0.85,SaleemLogothetis_approx,entorhinal hippocampal ventral
+PaS,0.10,-0.72,0.65,0.85,SaleemLogothetis_approx,entorhinal hippocampal ventral
+TH,0.10,-0.72,0.65,0.85,SaleemLogothetis_approx,entorhinal hippocampal ventral
+PrS,0.10,-0.72,0.65,0.85,SaleemLogothetis_approx,entorhinal hippocampal ventral
+Hip,0.10,-0.72,0.65,0.85,SaleemLogothetis_approx,entorhinal hippocampal ventral
+CA1,0.10,-0.72,0.65,0.85,SaleemLogothetis_approx,entorhinal hippocampal ventral
+DG,0.10,-0.72,0.65,0.85,SaleemLogothetis_approx,entorhinal hippocampal ventral
+CA3,0.10,-0.72,0.65,0.85,SaleemLogothetis_approx,entorhinal hippocampal ventral
+STG,0.02,0.26,0.70,0.55,SaleemLogothetis_approx,superior temporal auditory
+STP#2,0.02,0.26,0.70,0.55,SaleemLogothetis_approx,superior temporal auditory
+A1,0.02,0.26,0.70,0.55,SaleemLogothetis_approx,superior temporal auditory
+A2,0.02,0.26,0.70,0.55,SaleemLogothetis_approx,superior temporal auditory
+TE,0.12,-0.28,0.75,0.70,SaleemLogothetis_approx,inferotemporal ventral
+20,0.12,-0.28,0.75,0.70,SaleemLogothetis_approx,inferotemporal ventral
+AITv,0.12,-0.28,0.75,0.70,SaleemLogothetis_approx,inferotemporal ventral
+CIT,0.12,-0.28,0.75,0.70,SaleemLogothetis_approx,inferotemporal ventral
+CITd,0.12,-0.28,0.75,0.70,SaleemLogothetis_approx,inferotemporal ventral
+CITv,0.12,-0.28,0.75,0.70,SaleemLogothetis_approx,inferotemporal ventral
+21,0.12,-0.28,0.75,0.70,SaleemLogothetis_approx,inferotemporal ventral
+AITd,0.12,-0.28,0.75,0.70,SaleemLogothetis_approx,inferotemporal ventral
+TEa#3,0.12,-0.28,0.75,0.70,SaleemLogothetis_approx,inferotemporal ventral
+TEm,0.12,-0.28,0.75,0.70,SaleemLogothetis_approx,inferotemporal ventral
+PIT,0.12,-0.28,0.75,0.70,SaleemLogothetis_approx,inferotemporal ventral
+PITd,0.12,-0.28,0.75,0.70,SaleemLogothetis_approx,inferotemporal ventral
+PITv,0.12,-0.28,0.75,0.70,SaleemLogothetis_approx,inferotemporal ventral
+STS,0.02,0.26,0.70,0.55,SaleemLogothetis_approx,superior temporal auditory
+STSd,0.02,0.26,0.70,0.55,SaleemLogothetis_approx,superior temporal auditory
+TPO,0.14,0.06,0.65,0.45,SaleemLogothetis_approx,temporo parieto occipital junction
+TPOc,0.14,0.06,0.65,0.45,SaleemLogothetis_approx,temporo parieto occipital junction
+TPOi,0.14,0.06,0.65,0.45,SaleemLogothetis_approx,temporo parieto occipital junction
+TPOr,0.14,0.06,0.65,0.45,SaleemLogothetis_approx,temporo parieto occipital junction
+STSf,0.02,0.26,0.70,0.55,SaleemLogothetis_approx,superior temporal auditory
+PGa,-0.22,0.56,0.75,0.70,SaleemLogothetis_approx,inferior parietal
+IPa,-0.22,0.56,0.75,0.70,SaleemLogothetis_approx,inferior parietal
+OAa,-0.70,0.02,0.75,0.35,SaleemLogothetis_approx,occipital association
+MT,-0.60,0.18,0.80,0.55,SaleemLogothetis_approx,motion complex posterior lateral
+MTp,-0.60,0.18,0.80,0.55,SaleemLogothetis_approx,motion complex posterior lateral
+FST,-0.60,0.18,0.80,0.55,SaleemLogothetis_approx,motion complex posterior lateral
+MST,-0.48,0.32,0.80,0.60,SaleemLogothetis_approx,superior temporal motion complex
+MSTp,-0.48,0.32,0.80,0.60,SaleemLogothetis_approx,superior temporal motion complex
+MSTd,-0.48,0.32,0.80,0.60,SaleemLogothetis_approx,superior temporal motion complex
+OC#2,-0.70,0.02,0.75,0.35,SaleemLogothetis_approx,occipital association
+VAC,-0.70,0.02,0.75,0.35,SaleemLogothetis_approx,occipital association
+OA,-0.70,0.02,0.75,0.35,SaleemLogothetis_approx,occipital association
+V3A,-0.82,0.58,0.85,0.70,SaleemLogothetis_approx,dorsal occipital
+V3,-0.90,0.42,0.90,0.65,SaleemLogothetis_approx,dorsal extrastriate posterior
+V3d,-0.90,0.42,0.90,0.65,SaleemLogothetis_approx,dorsal extrastriate posterior
+V3v,-0.88,-0.30,0.90,0.65,SaleemLogothetis_approx,ventral extrastriate posterior
+V4,-0.72,-0.02,0.80,0.50,SaleemLogothetis_approx,mid visual occipitotemporal
+V4t,-0.72,-0.02,0.80,0.50,SaleemLogothetis_approx,mid visual occipitotemporal
+V4d,-0.74,0.28,0.80,0.60,SaleemLogothetis_approx,dorsal V4
+DLr,-0.74,0.22,0.75,0.45,SaleemLogothetis_approx,lateral occipital
+DLc,-0.74,0.22,0.75,0.45,SaleemLogothetis_approx,lateral occipital
+V4v,-0.70,-0.38,0.80,0.65,SaleemLogothetis_approx,ventral V4
+VPP,-0.62,-0.22,0.65,0.40,SaleemLogothetis_approx,ventral occipital association
+DI#1,-0.62,-0.22,0.65,0.40,SaleemLogothetis_approx,ventral occipital association
+PO#4,-0.68,0.62,0.80,0.75,SaleemLogothetis_approx,dorsal occipitoparietal
+V6A,-0.78,0.72,0.85,0.80,SaleemLogothetis_approx,dorsomedial occipital
+V6,-0.78,0.72,0.85,0.80,SaleemLogothetis_approx,dorsomedial occipital
+DP,-0.68,0.62,0.80,0.75,SaleemLogothetis_approx,dorsal occipitoparietal
+VOT,-0.56,-0.44,0.70,0.65,SaleemLogothetis_approx,ventral occipitotemporal
+V1,-1.00,0.10,1.00,0.40,SaleemLogothetis_approx,primary visual posterior
+ProSt,-0.66,0.36,0.70,0.55,SaleemLogothetis_approx,prostriata posterior dorsal
+V2,-0.96,0.08,0.95,0.40,SaleemLogothetis_approx,early visual posterior
+BG,0.04,-0.12,0.60,0.40,SaleemLogothetis_approx,striatal central ventral
+Amyg,0.54,-0.58,0.75,0.85,SaleemLogothetis_approx,amygdala anterior ventral
+Bla,0.54,-0.58,0.75,0.85,SaleemLogothetis_approx,amygdala anterior ventral
+SN,0.00,-0.32,0.60,0.55,SaleemLogothetis_approx,basal ganglia ventral
+Sub.Th,0.00,-0.32,0.60,0.55,SaleemLogothetis_approx,basal ganglia ventral
+GPe,0.00,-0.32,0.60,0.55,SaleemLogothetis_approx,basal ganglia ventral
+STR,0.04,-0.12,0.60,0.40,SaleemLogothetis_approx,striatal central ventral
+Cd,0.04,-0.12,0.60,0.40,SaleemLogothetis_approx,striatal central ventral
+Pu,0.04,-0.12,0.60,0.40,SaleemLogothetis_approx,striatal central ventral
+Clau,0.04,-0.12,0.60,0.40,SaleemLogothetis_approx,striatal central ventral
+OFC,0.88,-0.42,0.95,0.75,SaleemLogothetis_approx,orbital frontal anterior ventral

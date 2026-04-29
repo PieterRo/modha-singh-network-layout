@@ -5,6 +5,7 @@ Standalone MATLAB project for building a compact boxed 2D layout of the Modha & 
 ## Files
 
 - `make_modha_mds_box_layout.m`: main MATLAB function
+- `region_constraints.csv`: optional soft anatomical anchors for side-view orientation
 - `sd01.txt`: node list
 - `sd02.txt`: directed connectivity edge list
 - `sd03.txt`: hierarchy / mapping edge list
@@ -17,6 +18,7 @@ Generated outputs are written to `results/` and are ignored by git by default.
 opts = struct();
 opts.layout = 'grid';
 opts.colorByMajorGroup = true;
+opts.useRegionConstraints = true;
 opts.reuseMDSCache = true;
 opts.saveMDSCache = true;
 
@@ -54,9 +56,44 @@ Enable this with:
 opts.colorByMajorGroup = true;
 ```
 
+## Soft Anatomical Orientation
+
+The project can also apply weak anterior-posterior and dorsal-ventral anchor
+preferences during final box assignment without recomputing the MDS embedding.
+This helps push posterior visual areas left, frontal areas right, dorsal areas
+up, and ventral areas down while still letting neighborhood structure come from
+connectivity.
+
+Enable this with:
+
+```matlab
+opts.useRegionConstraints = true;
+opts.constraintLambdaAP = 0.25;
+opts.constraintLambdaDV = 0.20;
+```
+
+By default the function looks for `region_constraints.csv` next to
+`make_modha_mds_box_layout.m`. You can point to a different file with:
+
+```matlab
+opts.regionConstraintsFile = 'my_constraints.csv';
+```
+
+The exported coordinate table includes:
+
+- `is_anatomically_anchored`
+- `anchor_ap_pref`
+- `anchor_dv_pref`
+- `anchor_ap_weight`
+- `anchor_dv_weight`
+- `anchor_source`
+- `anchor_notes`
+
 ## MDS Cache
 
-The expensive MDS embedding is cached in a MAT file so recoloring or redrawing does not need to recompute the embedding.
+The expensive MDS embedding is cached in a MAT file so recoloring, redrawing,
+or changing soft anatomical anchor weights does not need to recompute the
+embedding.
 
 Useful options:
 

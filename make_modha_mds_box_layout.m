@@ -24,6 +24,10 @@ function OUT = make_modha_mds_box_layout(sd01file, sd02file, varargin)
 %              .boxGapY               (default 0.08)
 %              .fontSize              (default 6)
 %              .colorByMajorGroup     (default false)
+%              .useRegionConstraints  (default false)
+%              .regionConstraintsFile (default local region_constraints.csv)
+%              .constraintLambdaAP    (default 0.25)
+%              .constraintLambdaDV    (default 0.20)
 %              .drawEdges             (default false)
 %              .maxEdgesToDraw        (default 500)
 %              .mdsCriterion          (default 'stress')
@@ -105,6 +109,8 @@ Aplot = A(plotIdx, plotIdx);
 labelsPlot = labels(plotIdx);
 origIndexPlot = nodeIndex(plotIdx);
 majorGroupPlot = majorGroupAll(plotIdx);
+constraintSpecAll = load_region_constraints(labels, opts);
+constraintSpecPlot = subset_region_constraints(constraintSpecAll, plotIdx);
 
 cacheFile = resolve_mds_cache_file(outPrefix, opts);
 cacheSignature = build_mds_cache_signature(sd01file, sd02file, sd03file, plotIdx, opts);
@@ -121,13 +127,14 @@ else
     [Yplot, stress, mdsInfo] = compute_mds_layout(D, Dsquare, opts);
     cacheInfo = save_mds_cache(cacheFile, cacheSignature, Yplot, stress, distInfo, mdsInfo, opts, cacheInfo);
 end
-[centerXY, gridRC, layoutInfo] = assign_box_layout(Yplot, opts);
+[centerXY, gridRC, layoutInfo] = assign_box_layout(Yplot, opts, constraintSpecPlot);
 
 boxX = centerXY(:,1) - opts.boxWidth / 2;
 boxY = centerXY(:,2) - opts.boxHeight / 2;
 
 tbl = build_output_table(nodeIndex, labels, keepMask, Yplot, gridRC, centerXY, ...
-    boxX, boxY, inDegree, outDegree, rootIndexAll, rootLabelAll, depthAll, majorGroupAll);
+    boxX, boxY, inDegree, outDegree, rootIndexAll, rootLabelAll, depthAll, ...
+    majorGroupAll, constraintSpecAll);
 
 fig = draw_box_layout(labelsPlot, majorGroupPlot, centerXY, Aplot, opts, layoutInfo);
 files = export_outputs(fig, outPrefix, tbl, opts, cacheFile);
@@ -160,6 +167,7 @@ OUT.boxCenterXY = centerXY;
 OUT.gridRC = gridRC;
 OUT.parentOf = parentOfAll;
 OUT.majorGroup = majorGroupAll;
+OUT.regionConstraints = constraintSpecAll;
 OUT.inDegree = inDegree;
 OUT.outDegree = outDegree;
 OUT.stress = stress;
@@ -215,6 +223,10 @@ defaults.boxGapY = 0.08;
 defaults.fontSize = 6;
 defaults.fontName = 'Helvetica';
 defaults.colorByMajorGroup = false;
+defaults.useRegionConstraints = false;
+defaults.regionConstraintsFile = '';
+defaults.constraintLambdaAP = 0.25;
+defaults.constraintLambdaDV = 0.20;
 defaults.drawEdges = false;
 defaults.maxEdgesToDraw = 500;
 defaults.mdsCriterion = 'stress';
@@ -295,6 +307,154 @@ if ~isempty(opts.mdsCacheFile)
 else
     cacheFile = [outPrefix '_mds_cache.mat'];
 end
+end
+
+function constraintSpec = load_region_constraints(labels, opts)
+nNodes = numel(labels);
+constraintSpec = empty_region_constraints(nNodes);
+constraintSpec.file = resolve_region_constraints_file(opts);
+
+if ~opts.useRegionConstraints
+    constraintSpec.info.reason = 'disabled';
+    return;
+end
+
+if isempty(constraintSpec.file) || exist(constraintSpec.file, 'file') ~= 2
+    constraintSpec.info.reason = 'file_missing';
+    warning('make_modha_mds_box_layout:RegionConstraintsMissing', ...
+        ['opts.useRegionConstraints is true, but no region constraints file was found. ' ...
+         'Continuing without anatomical anchors.']);
+    return;
+end
+
+T = readtable(constraintSpec.file, 'Delimiter', ',');
+requiredVars = {'acronym', 'ap_pref', 'dv_pref', 'ap_weight', 'dv_weight'};
+for i = 1:numel(requiredVars)
+    if ~any(strcmpi(T.Properties.VariableNames, requiredVars{i}))
+        error('make_modha_mds_box_layout:BadRegionConstraintsFile', ...
+            'Region constraints file is missing required column "%s": %s', ...
+            requiredVars{i}, constraintSpec.file);
+    end
+end
+
+constraintLabels = table_text_column_to_cellstr(get_table_var(T, 'acronym'));
+apPref = double(get_table_var(T, 'ap_pref'));
+dvPref = double(get_table_var(T, 'dv_pref'));
+apWeight = double(get_table_var(T, 'ap_weight'));
+dvWeight = double(get_table_var(T, 'dv_weight'));
+
+if any(~isfinite(apWeight)) || any(apWeight < 0) || any(~isfinite(dvWeight)) || any(dvWeight < 0)
+    error('make_modha_mds_box_layout:BadRegionConstraintsWeights', ...
+        'ap_weight and dv_weight must be finite and non-negative in %s.', constraintSpec.file);
+end
+
+source = repmat({''}, height(T), 1);
+notes = repmat({''}, height(T), 1);
+if any(strcmpi(T.Properties.VariableNames, 'source'))
+    source = table_text_column_to_cellstr(get_table_var(T, 'source'));
+end
+if any(strcmpi(T.Properties.VariableNames, 'notes'))
+    notes = table_text_column_to_cellstr(get_table_var(T, 'notes'));
+end
+
+[tf, loc] = ismember(constraintLabels, labels);
+if numel(unique(constraintLabels(tf))) ~= nnz(tf)
+    error('make_modha_mds_box_layout:DuplicateRegionConstraintLabels', ...
+        'Duplicate acronym entries were found among the matched rows in %s.', constraintSpec.file);
+end
+
+matchedRows = find(tf);
+matchedIdx = loc(tf);
+constraintSpec.apPref(matchedIdx) = apPref(matchedRows);
+constraintSpec.dvPref(matchedIdx) = dvPref(matchedRows);
+constraintSpec.apWeight(matchedIdx) = apWeight(matchedRows);
+constraintSpec.dvWeight(matchedIdx) = dvWeight(matchedRows);
+constraintSpec.source(matchedIdx) = source(matchedRows);
+constraintSpec.notes(matchedIdx) = notes(matchedRows);
+constraintSpec.isAnchored = ...
+    (isfinite(constraintSpec.apPref) & (constraintSpec.apWeight > 0)) | ...
+    (isfinite(constraintSpec.dvPref) & (constraintSpec.dvWeight > 0));
+constraintSpec.active = any(constraintSpec.isAnchored);
+constraintSpec.info.reason = 'loaded';
+constraintSpec.info.nRows = height(T);
+constraintSpec.info.nMatchedRows = numel(matchedRows);
+constraintSpec.info.nUnmatchedRows = height(T) - numel(matchedRows);
+constraintSpec.info.unmatchedAcronyms = constraintLabels(~tf);
+constraintSpec.info.nAnchoredNodes = nnz(constraintSpec.isAnchored);
+
+if opts.verbose
+    fprintf(['Loaded region constraints from %s ' ...
+        '(%d matched rows, %d anchored nodes).\n'], ...
+        constraintSpec.file, constraintSpec.info.nMatchedRows, constraintSpec.info.nAnchoredNodes);
+    if constraintSpec.info.nUnmatchedRows > 0
+        fprintf('Region constraints ignored %d unmatched rows.\n', constraintSpec.info.nUnmatchedRows);
+    end
+end
+end
+
+function constraintSpec = empty_region_constraints(nNodes)
+constraintSpec = struct();
+constraintSpec.file = '';
+constraintSpec.active = false;
+constraintSpec.isAnchored = false(nNodes, 1);
+constraintSpec.apPref = nan(nNodes, 1);
+constraintSpec.dvPref = nan(nNodes, 1);
+constraintSpec.apWeight = zeros(nNodes, 1);
+constraintSpec.dvWeight = zeros(nNodes, 1);
+constraintSpec.source = repmat({''}, nNodes, 1);
+constraintSpec.notes = repmat({''}, nNodes, 1);
+constraintSpec.info = struct('reason', '', 'nRows', 0, 'nMatchedRows', 0, ...
+    'nUnmatchedRows', 0, 'unmatchedAcronyms', {{}}, 'nAnchoredNodes', 0);
+end
+
+function filePath = resolve_region_constraints_file(opts)
+if ~isempty(opts.regionConstraintsFile)
+    filePath = to_char(opts.regionConstraintsFile);
+    return;
+end
+
+functionDir = fileparts(mfilename('fullpath'));
+candidateFile = fullfile(functionDir, 'region_constraints.csv');
+if exist(candidateFile, 'file') == 2
+    filePath = candidateFile;
+else
+    filePath = '';
+end
+end
+
+function value = get_table_var(T, varName)
+idx = find(strcmpi(T.Properties.VariableNames, varName), 1, 'first');
+if isempty(idx)
+    error('make_modha_mds_box_layout:MissingTableVariable', ...
+        'Table variable not found: %s', varName);
+end
+value = T.(T.Properties.VariableNames{idx});
+end
+
+function out = table_text_column_to_cellstr(col)
+if iscellstr(col)
+    out = col(:);
+elseif isstring(col)
+    out = cellstr(col(:));
+elseif ischar(col)
+    out = cellstr(col);
+elseif iscell(col)
+    out = cellfun(@to_char, col(:), 'UniformOutput', false);
+else
+    error('make_modha_mds_box_layout:BadTextColumn', ...
+        'Expected a text column in region_constraints.csv.');
+end
+end
+
+function subset = subset_region_constraints(constraintSpec, idx)
+subset = constraintSpec;
+fieldsToSubset = {'isAnchored', 'apPref', 'dvPref', 'apWeight', 'dvWeight', 'source', 'notes'};
+for i = 1:numel(fieldsToSubset)
+    fieldName = fieldsToSubset{i};
+    subset.(fieldName) = constraintSpec.(fieldName)(idx);
+end
+subset.active = any(subset.isAnchored);
+subset.info.nAnchoredNodes = nnz(subset.isAnchored);
 end
 
 function sig = build_mds_cache_signature(sd01file, sd02file, sd03file, plotIdx, opts)
@@ -762,7 +922,7 @@ if size(Y, 2) < 2
 end
 end
 
-function [centerXY, gridRC, layoutInfo] = assign_box_layout(Y, opts)
+function [centerXY, gridRC, layoutInfo] = assign_box_layout(Y, opts, constraintSpec)
 nNodes = size(Y, 1);
 cellW = opts.boxWidth + opts.boxGapX;
 cellH = opts.boxHeight + opts.boxGapY;
@@ -773,6 +933,7 @@ angles(end) = [];
 if isempty(angles)
     angles = 0;
 end
+transformList = orientation_transform_list(constraintSpec);
 
 bestCost = inf;
 bestCenterXY = [];
@@ -783,21 +944,33 @@ for s = 1:size(shapeList, 1)
     nRows = shapeList(s, 1);
     nCols = shapeList(s, 2);
     [candidateXY, candidateRC] = make_candidate_cells(nRows, nCols, nNodes, opts, cellW, cellH);
+    candidateNormXY = normalize_candidate_coordinates(candidateXY);
 
-    for a = 1:numel(angles)
-        Yrot = rotate_points(Y, angles(a));
-        Yfit = fit_points_to_candidates(Yrot, candidateXY, opts.fitFill);
-        [assignIdx, totalCost, method] = assign_points_to_cells(Yfit, candidateXY, opts);
+    for t = 1:size(transformList, 1)
+        reflectX = transformList(t, 1);
+        reflectY = transformList(t, 2);
 
-        if totalCost < bestCost
-            bestCost = totalCost;
-            bestCenterXY = candidateXY(assignIdx, :);
-            bestGridRC = candidateRC(assignIdx, :);
-            bestInfo.nRows = nRows;
-            bestInfo.nCols = nCols;
-            bestInfo.angleDeg = angles(a) * 180 / pi;
-            bestInfo.assignmentMethod = method;
-            bestInfo.totalCost = totalCost;
+        for a = 1:numel(angles)
+            Yrot = orient_points(Y, angles(a), reflectX, reflectY);
+            Yfit = fit_points_to_candidates(Yrot, candidateXY, opts.fitFill);
+            [assignIdx, totalCost, method, costInfo] = assign_points_to_cells( ...
+                Yfit, candidateXY, candidateNormXY, constraintSpec, opts);
+
+            if totalCost < bestCost
+                bestCost = totalCost;
+                bestCenterXY = candidateXY(assignIdx, :);
+                bestGridRC = candidateRC(assignIdx, :);
+                bestInfo.nRows = nRows;
+                bestInfo.nCols = nCols;
+                bestInfo.angleDeg = angles(a) * 180 / pi;
+                bestInfo.reflectX = reflectX;
+                bestInfo.reflectY = reflectY;
+                bestInfo.assignmentMethod = method;
+                bestInfo.totalCost = totalCost;
+                bestInfo.baseCost = costInfo.baseTotal;
+                bestInfo.constraintCost = costInfo.constraintTotal;
+                bestInfo.nAnchoredNodes = nnz(constraintSpec.isAnchored);
+            end
         end
     end
 end
@@ -815,6 +988,14 @@ layoutInfo.totalWidth = max(centerXY(:,1)) - min(centerXY(:,1)) + opts.boxWidth;
 layoutInfo.totalHeight = max(centerXY(:,2)) - min(centerXY(:,2)) + opts.boxHeight;
 layoutInfo.cellWidth = cellW;
 layoutInfo.cellHeight = cellH;
+end
+
+function transformList = orientation_transform_list(constraintSpec)
+if constraintSpec.active
+    transformList = [1 1; -1 1; 1 -1; -1 -1];
+else
+    transformList = [1 1];
+end
 end
 
 function shapeList = candidate_shapes(nNodes, opts, cellW, cellH)
@@ -895,6 +1076,13 @@ R = [cos(angleRad), -sin(angleRad); sin(angleRad), cos(angleRad)];
 Yrot = Y * R';
 end
 
+function Yout = orient_points(Y, angleRad, reflectX, reflectY)
+Ytmp = Y;
+Ytmp(:,1) = reflectX * Ytmp(:,1);
+Ytmp(:,2) = reflectY * Ytmp(:,2);
+Yout = rotate_points(Ytmp, angleRad);
+end
+
 function Yfit = fit_points_to_candidates(Y, candidateXY, fitFill)
 Yc = Y - mean(Y, 1);
 targetCenter = mean(candidateXY, 1);
@@ -927,8 +1115,50 @@ Yfit(:,1) = Yfit(:,1) + targetCenter(1);
 Yfit(:,2) = Yfit(:,2) + targetCenter(2);
 end
 
-function [assignIdx, totalCost, method] = assign_points_to_cells(Yfit, candidateXY, opts)
-costMatrix = pdist2(Yfit, candidateXY, 'squaredeuclidean');
+function candidateNormXY = normalize_candidate_coordinates(candidateXY)
+candidateNormXY = zeros(size(candidateXY));
+candidateNormXY(:,1) = normalize_signed_coordinate(candidateXY(:,1));
+candidateNormXY(:,2) = normalize_signed_coordinate(candidateXY(:,2));
+end
+
+function coordNorm = normalize_signed_coordinate(coord)
+maxAbs = max(abs(coord));
+if ~isfinite(maxAbs) || maxAbs <= 0
+    coordNorm = zeros(size(coord));
+else
+    coordNorm = coord / maxAbs;
+end
+end
+
+function penaltyMatrix = build_constraint_penalty(candidateNormXY, constraintSpec, opts)
+nNodes = numel(constraintSpec.isAnchored);
+nCells = size(candidateNormXY, 1);
+penaltyMatrix = zeros(nNodes, nCells);
+
+if ~constraintSpec.active
+    return;
+end
+
+hasAP = isfinite(constraintSpec.apPref) & (constraintSpec.apWeight > 0);
+if any(hasAP)
+    apDelta = bsxfun(@minus, candidateNormXY(:,1)', constraintSpec.apPref(hasAP));
+    penaltyMatrix(hasAP, :) = penaltyMatrix(hasAP, :) + bsxfun(@times, ...
+        apDelta .^ 2, opts.constraintLambdaAP * constraintSpec.apWeight(hasAP));
+end
+
+hasDV = isfinite(constraintSpec.dvPref) & (constraintSpec.dvWeight > 0);
+if any(hasDV)
+    dvDelta = bsxfun(@minus, candidateNormXY(:,2)', constraintSpec.dvPref(hasDV));
+    penaltyMatrix(hasDV, :) = penaltyMatrix(hasDV, :) + bsxfun(@times, ...
+        dvDelta .^ 2, opts.constraintLambdaDV * constraintSpec.dvWeight(hasDV));
+end
+end
+
+function [assignIdx, totalCost, method, costInfo] = assign_points_to_cells( ...
+    Yfit, candidateXY, candidateNormXY, constraintSpec, opts)
+baseCostMatrix = pdist2(Yfit, candidateXY, 'squaredeuclidean');
+constraintCostMatrix = build_constraint_penalty(candidateNormXY, constraintSpec, opts);
+costMatrix = baseCostMatrix + constraintCostMatrix;
 
 if opts.useMatchpairs && exist('matchpairs', 'file') == 2
     unmatchedCost = max(costMatrix(:));
@@ -942,13 +1172,23 @@ if opts.useMatchpairs && exist('matchpairs', 'file') == 2
         [~, order] = sort(pairs(:,1));
         pairs = pairs(order, :);
         assignIdx = pairs(:,2);
-        totalCost = sum(costMatrix(sub2ind(size(costMatrix), (1:size(costMatrix,1))', assignIdx)));
+        linearIdx = sub2ind(size(costMatrix), (1:size(costMatrix,1))', assignIdx);
+        totalCost = sum(costMatrix(linearIdx));
+        costInfo = struct();
+        costInfo.baseTotal = sum(baseCostMatrix(linearIdx));
+        costInfo.constraintTotal = sum(constraintCostMatrix(linearIdx));
+        costInfo.total = totalCost;
         method = 'matchpairs';
         return;
     end
 end
 
 [assignIdx, totalCost] = greedy_assignment(costMatrix, Yfit);
+linearIdx = sub2ind(size(costMatrix), (1:size(costMatrix,1))', assignIdx);
+costInfo = struct();
+costInfo.baseTotal = sum(baseCostMatrix(linearIdx));
+costInfo.constraintTotal = sum(constraintCostMatrix(linearIdx));
+costInfo.total = totalCost;
 method = 'greedy';
 end
 
@@ -1003,7 +1243,8 @@ totalCost = sum(costMatrix(sub2ind(size(costMatrix), (1:nNodes)', assignIdx)));
 end
 
 function tbl = build_output_table(nodeIndex, labels, keepMask, Yplot, gridRC, centerXY, ...
-    boxX, boxY, inDegree, outDegree, rootIndexAll, rootLabelAll, depthAll, majorGroupAll)
+    boxX, boxY, inDegree, outDegree, rootIndexAll, rootLabelAll, depthAll, ...
+    majorGroupAll, constraintSpecAll)
 nNodes = numel(nodeIndex);
 
 mdsX = nan(nNodes, 1);
@@ -1014,6 +1255,13 @@ boxCenterX = nan(nNodes, 1);
 boxCenterY = nan(nNodes, 1);
 boxLeftX = nan(nNodes, 1);
 boxBottomY = nan(nNodes, 1);
+isAnchored = constraintSpecAll.isAnchored(:);
+anchorApPref = constraintSpecAll.apPref(:);
+anchorDvPref = constraintSpecAll.dvPref(:);
+anchorApWeight = constraintSpecAll.apWeight(:);
+anchorDvWeight = constraintSpecAll.dvWeight(:);
+anchorSource = constraintSpecAll.source(:);
+anchorNotes = constraintSpecAll.notes(:);
 
 plotIdx = find(keepMask);
 mdsX(plotIdx) = Yplot(:,1);
@@ -1042,11 +1290,21 @@ tbl = table( ...
     rootIndexAll(:), ...
     rootLabelAll(:), ...
     majorGroupAll(:), ...
+    isAnchored(:), ...
+    anchorApPref(:), ...
+    anchorDvPref(:), ...
+    anchorApWeight(:), ...
+    anchorDvWeight(:), ...
+    anchorSource(:), ...
+    anchorNotes(:), ...
     depthAll(:), ...
     'VariableNames', { ...
     'index', 'acronym', 'is_plotted', 'mds_x', 'mds_y', 'grid_row', 'grid_col', ...
     'box_center_x', 'box_center_y', 'box_x', 'box_y', ...
-    'in_degree', 'out_degree', 'root_index', 'root_acronym', 'major_group', 'hierarchy_depth'});
+    'in_degree', 'out_degree', 'root_index', 'root_acronym', 'major_group', ...
+    'is_anatomically_anchored', 'anchor_ap_pref', 'anchor_dv_pref', ...
+    'anchor_ap_weight', 'anchor_dv_weight', 'anchor_source', 'anchor_notes', ...
+    'hierarchy_depth'});
 end
 
 function fig = draw_box_layout(labelsPlot, majorGroupPlot, centerXY, Aplot, opts, layoutInfo)
